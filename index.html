@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Familiens Pakkeliste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400&family=Work+Sans:wght@500&family=Courier+Prime&display=swap">
+<style>
+/* Layout: et asymmetrisk etiket-grid som på en sæbeetiket – kursiv etiket i en smal venstrekolonne,
+   indhold forskudt til højre, luft i stedet for streger. Blå er eneste markeringsfarve. */
+:root {
+  --paper: #f4f0e7;
+  --mist: #dfe3df;
+  --ink: #1f1e1b;
+  --ink-soft: #6a665d;
+  --ink-faint: #a29d90;
+  --blue: #869bb9;
+  --apricot: #e58f5e;
+  --terra: #b06c4b;
+  --sage: #9fb39b;
+  --khaki: #c6be96;
+  --wheat: #d9c589;
+  --p1: var(--sage); --p2: var(--terra); --p3: var(--apricot); --p4: var(--wheat); --pf: var(--khaki);
+
+  --display: "Cormorant Garamond", "Garamond", "Times New Roman", serif;
+  --body: "Source Serif 4", Georgia, serif;
+  --eyebrow: "Work Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+  --label-col: 6.5rem;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--ink);
+  font: 300 17px/1.55 var(--body);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow-x: hidden;
+}
+.wrap { max-width: 680px; margin: 0 auto; padding-inline: 22px; padding-block: 36px 90px; display: flex; flex-direction: column; gap: 76px; }
+
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; line-height: 1; }
+h1 { font-size: clamp(2.9rem, 11vw, 4.4rem); letter-spacing: -0.015em; }
+h1 .indent { display: block; padding-left: clamp(2.5rem, 18%, 8rem); }
+h2 { font-size: 2rem; }
+em { font-style: italic; }
+.eyebrow { font: 500 .7rem/1 var(--eyebrow); text-transform: uppercase; letter-spacing: .18em; }
+.mono { font-family: var(--mono); font-size: .8rem; letter-spacing: .14em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.lede { margin: 0; color: var(--ink-soft); max-width: 30ch; }
+
+/* blå håndmalet markering – bruges til alt, der er valgt eller fremhævet */
+.brush, .season-btn[aria-pressed="true"] span {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 13 C30 8 70 9 118 7 C150 6 178 6 197 9 C199 16 196 24 195 31 C160 33 112 31 66 34 C40 35 18 37 3 35 C1 27 2 20 4 13 Z' fill='%23869bb9' fill-opacity='.78'/%3E%3C/svg%3E") 0 64% / 100% 62% no-repeat;
+  padding-inline: .12em .22em;
+  margin-inline: -.12em -.22em;
+}
+.sketch { display: block; color: var(--ink); }
+.sketch path, .sketch circle { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+:focus-visible { outline: 1.5px dashed var(--ink); outline-offset: 4px; }
+
+/* forside-hero: overskrift forskudt, illustration skubbet ud mod kanten */
+.hero { position: relative; display: flex; flex-direction: column; gap: 30px; padding-top: 70px; }
+.hero .eyebrow { position: absolute; top: 0; left: 0; }
+.hero .sketch { position: absolute; top: -6px; right: -14px; width: clamp(130px, 34vw, 210px); }
+.hero .lede { margin-left: clamp(2.5rem, 18%, 8rem); }
+/* forsiden: kufferten står ved siden af teksten under overskriften */
+.lede-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.lede-row .lede { flex: 1 1 auto; min-width: 0; }
+.hero .lede-row .sketch { position: static; flex: none; width: clamp(84px, 24vw, 180px); }
+.hero:has(.lede-row) { padding-top: 56px !important; }
+
+/* etiket-grid: kursiv etiket til venstre, indhold til højre */
+.row { display: grid; grid-template-columns: var(--label-col) minmax(0, 1fr); column-gap: 18px; align-items: start; }
+.row-label { display: flex; flex-direction: column; gap: 8px; padding-top: .35rem; }
+.row-label .lbl { font: italic 400 1.35rem/1 var(--display); color: var(--ink-soft); }
+
+/* fælles markør: håndtegnet cirkel, blå med flueben når valgt */
+.mark {
+  appearance: none; -webkit-appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 22px; height: 22px; border: 1.2px solid var(--ink);
+  border-radius: 55% 45% 52% 48% / 47% 53% 47% 53%;
+  background: transparent center / 120% no-repeat;
+  display: inline-block;
+}
+.mark.on, .mark:checked {
+  background-color: var(--blue);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5 C7 13.6 9 15.6 10.3 18 C12.6 12 16 7.4 20.5 3.5' fill='none' stroke='%231f1e1b' stroke-width='1.9' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.blob { display: inline-block; width: 12px; height: 12px; flex: none; border-radius: 54% 46% 58% 42% / 46% 56% 44% 54%; background: var(--pc); }
+
+/* 01 hvem */
+.people { display: flex; flex-direction: column; gap: 6px; }
+.person-btn { display: flex; align-items: center; gap: 16px; padding: 6px 0; text-align: left; }
+.person-btn .pname { font: 400 1.75rem/1.1 var(--display); transition: color .2s; }
+.person-btn[aria-pressed="false"] .pname { color: var(--ink-faint); }
+.person-btn .mono { margin-left: 2px; }
+.type-hint { margin: 6px 0 0 38px; font-size: .72rem; }
+
+/* 02 sæson – forskudt 2×2 */
+.seasons { display: grid; grid-template-columns: repeat(2, minmax(0, 8.5rem)); gap: 8px 20px; }
+.season-btn { font: italic 400 1.75rem/1.25 var(--display); color: var(--ink-faint); padding: 2px 0; text-align: left; }
+.season-btn[aria-pressed="true"] { color: var(--ink); font-style: normal; }
+
+/* 03 dage */
+.stepper { display: flex; align-items: center; gap: 18px; }
+.stepper button { width: 42px; height: 42px; border-radius: 52% 48% 55% 45% / 48% 54% 46% 52%; border: 1.2px solid var(--ink); font: 400 1.5rem/1 var(--display); }
+.stepper button:hover { background: var(--mist); }
+.stepper input { width: 2.4ch; border: 0; background: transparent; font: 400 2.2rem/1 var(--display); text-align: center; color: var(--ink); padding: 0; -moz-appearance: textfield; }
+.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.cta { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+.primary { display: inline-flex; align-items: center; gap: 28px; background: transparent; color: var(--ink); border: 0; position: relative; padding: 20px 29px; font: 500 .74rem/1 var(--eyebrow); letter-spacing: .2em; text-transform: uppercase; transition: background .2s; }
+.primary:hover { background: var(--mist); }
+/* håndtegnet kant: let skæve hjørner + blyantsfilteret, så stregen ikke er snorlige */
+.primary, .primary::before { border-radius: 255px 14px 225px 12px / 12px 225px 14px 255px; }
+.primary::before { content: ""; position: absolute; inset: 0; border: 1.4px solid var(--ink); filter: url(#pencil); pointer-events: none; }
+.primary:disabled { opacity: .35; cursor: not-allowed; }
+.link { font: .8rem var(--mono); letter-spacing: .08em; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; color: var(--ink); padding: 6px 0; }
+.link:hover { text-decoration-style: wavy; }
+.note { font-size: .9rem; color: var(--ink-soft); margin: 0; max-width: 32ch; text-align: right; }
+.banner { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 22px 24px; background: var(--mist); margin-left: clamp(0rem, 12%, 5rem); }
+.banner p { margin: 0; font: 400 1.35rem/1.25 var(--display); }
+
+/* pakkeliste – etiket-grid: kursiv etiket i en venstre spalte, indhold forskudt til højre */
+:root { --gut: clamp(5rem, 30%, 11.5rem); }
+.spec { margin: 10px 0 0 var(--gut); display: flex; flex-direction: column; gap: 14px; }
+.spec > div { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; }
+.spec dt { font: italic 400 1.2rem/1 var(--display); color: var(--ink-soft); }
+.spec dd { margin: 0; font: .8rem var(--mono); letter-spacing: .14em; text-transform: uppercase; text-align: right; font-variant-numeric: tabular-nums; }
+.spec-people { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 14px; }
+.spec-people > span { display: inline-flex; align-items: center; gap: 7px; }
+.progress-wrap { display: flex; flex-direction: column; gap: 10px; margin-left: var(--gut); }
+.progress { position: relative; height: 12px; }
+/* uudfyldt spor: samme penselform som fyldet, bare svagt lyseblå */
+.progress::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M2 6 C40 3 120 4 198 5 L197 15 C130 17 60 16 3 17 Z' fill='%23869bb9' fill-opacity='.22'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.progress > div { position: absolute; left: 0; top: 0; bottom: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M2 6 C40 3 120 4 198 5 L197 15 C130 17 60 16 3 17 Z' fill='%23869bb9'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; transition: width .4s ease; }
+.actions { display: flex; justify-content: flex-end; gap: 18px; }
+
+/* grupper: navn til venstre, tæller til højre, derefter etiket-rækker */
+.group { display: flex; flex-direction: column; gap: 26px; }
+.group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+/* navnet bliver hængende øverst, mens man scroller ned gennem personens ting */
+.group > .group-head, .leaving > .group-head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--paper) var(--grain); padding: 12px 22px; margin: -12px -22px; }
+.leaving > .group-head { background: var(--mist); padding-inline: 28px; margin-inline: -28px; }
+.group-head h2 { display: flex; align-items: center; gap: 12px; }
+.group-head h2 .blob { width: 13px; height: 13px; }
+.sheet-row { display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); align-items: start; }
+.sheet-row + .sheet-row { margin-top: 10px; }
+.cat { font: italic 400 1.2rem/1 var(--display); color: var(--ink-soft); padding-top: 14px; }
+ul.items { list-style: none; margin: 0; padding: 0; }
+.item { display: flex; align-items: center; gap: 14px; padding: 7px 0; min-height: 44px; cursor: pointer; }
+.item .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.qty { font-family: var(--mono); font-size: .82rem; color: var(--ink-soft); white-space: nowrap; }
+.item.done .name { color: var(--ink-faint); text-decoration: line-through; text-decoration-thickness: 1px; }
+.item.done .qty { opacity: .5; }
+.who { font: .72rem var(--mono); letter-spacing: .08em; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); white-space: nowrap; }
+.who .blob { width: 9px; height: 9px; }
+.del { width: 30px; height: 30px; font: 1.3rem/1 var(--display); color: var(--ink-faint); flex: none; }
+.del:hover { color: var(--ink); }
+.empty-note { margin: 0; padding-top: 12px; color: var(--ink-soft); font-style: italic; }
+.all-done { color: var(--ink); }
+
+/* tilføj ekstra */
+.add-form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 14px; align-items: end; margin-top: 18px; }
+.add-form input, .add-form select { height: 44px; border: 0; border-bottom: 1px solid var(--ink-faint); background: transparent; font: 300 1rem var(--body); color: var(--ink); padding: 0 2px; min-width: 0; border-radius: 0; }
+.add-form input:focus { border-bottom-color: var(--ink); outline: none; }
+.add-form input::placeholder { color: var(--ink-faint); font-style: italic; }
+.add-form select { -webkit-appearance: none; appearance: none; border-bottom: 0; cursor: pointer; font: .8rem var(--mono); letter-spacing: .06em; padding-right: 22px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.8 C3.5 3.6 4.8 5 6 6.4 C7.4 4.8 8.7 3.4 10.5 1.6' fill='none' stroke='%231f1e1b' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") right 2px center / 11px no-repeat; }
+.add-form .primary { height: 44px; padding: 0 20px; }
+
+/* inden vi går – dæmpet panel som etiketten, huset kigger ud over kanten */
+.leaving { position: relative; background: var(--mist); margin-left: clamp(0rem, 10%, 4.5rem); margin-right: -22px; padding: 64px 28px 44px; display: flex; flex-direction: column; gap: 30px; --gut: clamp(4.6rem, 26%, 9rem); }
+.leaving .sketch { position: absolute; top: -48px; right: 28px; width: 104px; }
+.leaving h2 { font-size: 2.4rem; }
+
+.reset-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; justify-content: center; margin-top: -30px; }
+.reset-row span { font-family: var(--display); font-size: 1.25rem; }
+
+@media (min-width: 760px) {
+  .hero .sketch { right: -70px; top: -20px; }
+}
+@media (max-width: 519px) {
+  .sheet-row { grid-template-columns: minmax(0, 1fr); }
+  .sheet-row .cat { padding-top: 8px; }
+  .sheet-row .sheet-body { margin-left: 1.6rem; }
+  .spec, .progress-wrap { margin-left: 2.5rem; }
+}
+@media (max-width: 420px) {
+  :root { --label-col: 4.6rem; }
+  .row-label .lbl { font-size: 1.2rem; }
+  .add-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .add-form input { grid-column: 1 / -1; }
+  .hero { padding-top: 120px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- blyantsfilter, der giver stregerne en let ujævn, håndtegnet kant -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="pencil"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+</svg>
+
+<div class="wrap" id="app"></div>
+
+<script>
+/* ============================================================
+   KONFIGURATION – personer, sæsoner, items og "inden vi går".
+   ITEMS og BEFORE_LEAVING er hentet fra familiens Excel-ark (Pakkeliste-items.xlsx).
+
+   Felter pr. item:
+     navn      tekst
+     kat       kategori (gruppering)
+     hvem      'alle' (hver valgt person), 'faelles' (én gang for hele familien),
+               'voksne', 'boern', eller en liste af person-id'er fx ['p3']
+     saeson    udelad = alle sæsoner, ellers fx ['sommer','foraar']
+     prDag     antal pr. dag på turen (rundes op), med min/max
+     antal     fast antal (hvis ikke prDag)
+   ============================================================ */
+const PEOPLE = [
+  { id: 'p1', navn: 'Simone',   type: 'voksen', color: 'var(--p1)' },
+  { id: 'p2', navn: 'Daniel',   type: 'voksen', color: 'var(--p2)' },
+  { id: 'p3', navn: 'Kaj',      type: 'barn',   color: 'var(--p3)' },
+  { id: 'p4', navn: 'Dagmar',   type: 'barn',   color: 'var(--p4)' },
+];
+const SHARED = { id: 'faelles', navn: 'Fælles', color: 'var(--pf)' };
+const SEASONS = [
+  { id: 'foraar', navn: 'Forår' },
+  { id: 'sommer', navn: 'Sommer' },
+  { id: 'efteraar', navn: 'Efterår' },
+  { id: 'vinter', navn: 'Vinter' },
+];
+// typer af tur, der kan vælges til (højst én ad gangen). Ting i kategorien `kat` kommer kun med, når typen er valgt.
+const TRIP_TYPES = [
+  { id: 'udland', navn: 'Udlandsrejse', kat: 'Udlandet' },
+  { id: 'sommerhus', navn: 'Sommerhus', kat: 'Sommerhus' },
+];
+// kategorier der altid pakkes samlet på fælles-listen, også når de gælder hver person
+const SHARED_CATS = ['Toiletsager', 'Elektronik', 'Udlandet'];
+const CAT_ORDER = ['Tøj', 'Overtøj & sko', 'Toiletsager', 'Elektronik', 'Soveudstyr', 'Leg & hygge', 'Udlandet', 'Apotek', 'Spisetid & tur', 'Sommerhus'];
+
+const ITEMS = [
+  { navn: 'Underbukser', kat: 'Tøj', hvem: 'alle', prDag: 1, min: 2, max: 10 },
+  { navn: 'Undertrøjer', kat: 'Tøj', hvem: 'boern', prDag: 1, min: 2, max: 10 },
+  { navn: 'Strømper', kat: 'Tøj', hvem: 'alle', prDag: 1, min: 2, max: 10 },
+  { navn: 'T-shirts', kat: 'Tøj', hvem: 'alle', saeson: ['foraar', 'sommer', 'efteraar'], prDag: 0.8, min: 2, max: 10 },
+  { navn: 'Shorts', kat: 'Tøj', hvem: 'alle', saeson: ['sommer'], prDag: 0.4, min: 1, max: 6 },
+  { navn: 'Lange bukser', kat: 'Tøj', hvem: 'alle', prDag: 0.3, min: 1, max: 3 },
+  { navn: 'Langærmet bluse', kat: 'Tøj', hvem: 'alle', saeson: ['foraar', 'efteraar', 'vinter'], prDag: 0.4, min: 1, max: 10 },
+  { navn: 'Nederdel', kat: 'Tøj', hvem: ['p4', 'p1'], max: 3 },
+  { navn: 'Kjole', kat: 'Tøj', hvem: ['p4', 'p1'], max: 2 },
+  { navn: 'Varm trøje', kat: 'Tøj', hvem: 'alle', min: 1, antal: 1 },
+  { navn: 'Nattøj', kat: 'Tøj', hvem: 'alle', prDag: 0.15, min: 1, max: 6 },
+  { navn: 'Sovestrømper', kat: 'Tøj', hvem: ['p1'], saeson: ['efteraar', 'vinter'], antal: 1 },
+  { navn: 'Badetøj', kat: 'Tøj', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Løbetøj og løbesko', kat: 'Tøj', hvem: 'voksne', antal: 1 },
+  { navn: 'Sneakers', kat: 'Overtøj & sko', hvem: 'alle', antal: 1 },
+  { navn: 'Sandaler', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Crocs', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'sommer', 'efteraar'], antal: 1 },
+  { navn: 'Solhat / kasket', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Solbriller', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['foraar', 'sommer'], antal: 1 },
+  { navn: 'Regnjakke', kat: 'Overtøj & sko', hvem: 'alle', antal: 1 },
+  { navn: 'Regnbukser', kat: 'Overtøj & sko', hvem: 'boern', antal: 1 },
+  { navn: 'Gummistøvler', kat: 'Overtøj & sko', hvem: 'faelles', antal: 4 },
+  { navn: 'Termotøj', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'efteraar'], antal: 1 },
+  { navn: 'Vinterjakke', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['vinter'], antal: 1 },
+  { navn: 'Varm jakke', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['efteraar'], antal: 1 },
+  { navn: 'Flyverdragt', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['vinter'], antal: 1 },
+  { navn: 'Hue, halstørklæde og vanter', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['efteraar', 'vinter'], antal: 1 },
+  { navn: 'Vinterstøvler', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['vinter'], antal: 1 },
+  { navn: 'Hjemmesko (børn)', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'vinter', 'efteraar'], antal: 1 },
+  { navn: 'Tandbørste', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
+  { navn: 'Hårbørste', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
+  { navn: 'Elastikker og hårspænder', kat: 'Toiletsager', hvem: ['p4', 'p1'], antal: 3 },
+  { navn: 'Make-up: masccara mm.', kat: 'Toiletsager', hvem: ['p1'], antal: 1 },
+  { navn: 'Negleklipper (voksen og barn)', kat: 'Toiletsager', hvem: 'faelles', antal: 2 },
+  { navn: 'Håndklæde', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
+  { navn: 'Strandhåndklæde', kat: 'Toiletsager', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Tandpasta', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
+  { navn: 'Shampoo og sæbe', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
+  { navn: 'Deodorant', kat: 'Toiletsager', hvem: 'voksne', antal: 1 },
+  { navn: 'Solcreme', kat: 'Toiletsager', hvem: 'faelles', saeson: ['foraar', 'sommer'], antal: 1 },
+  { navn: 'Fed creme / læbepomade', kat: 'Toiletsager', hvem: ['p1'], saeson: ['efteraar', 'vinter'], antal: 1 },
+  { navn: 'Myggespray', kat: 'Toiletsager', hvem: 'faelles', saeson: ['sommer'], antal: 1 },
+  { navn: 'Briller', kat: 'Toiletsager', hvem: 'voksne', antal: 1 },
+  { navn: 'Kontaktlinser', kat: 'Toiletsager', hvem: 'voksne', prDag: 1, min: 2 },
+  { navn: 'Menstruationskop', kat: 'Toiletsager', hvem: ['p1'], antal: 1 },
+  { navn: 'Termometer', kat: 'Toiletsager', hvem: 'boern', antal: 1 },
+  { navn: 'D-dråber', kat: 'Toiletsager', hvem: 'boern', antal: 1 },
+  { navn: 'Iphoneoplader', kat: 'Elektronik', hvem: 'voksne', antal: 1 },
+  { navn: 'Høretelefoner', kat: 'Elektronik', hvem: ['p4'], antal: 1 },
+  { navn: 'Højtaler', kat: 'Elektronik', hvem: 'faelles', antal: 1 },
+  { navn: 'Airpods', kat: 'Elektronik', hvem: 'voksne', antal: 1 },
+  { navn: 'Computer og oplader', kat: 'Elektronik', hvem: 'voksne', antal: 1 },
+  { navn: 'Løbeur', kat: 'Elektronik', hvem: 'voksne', antal: 1 },
+  { navn: 'Sovebamse', kat: 'Soveudstyr', hvem: ['p3'], antal: 1 },
+  { navn: 'Bøger/tegnesager', kat: 'Leg & hygge', hvem: 'boern', antal: 1 },
+  { navn: 'Godnathistorier', kat: 'Soveudstyr', hvem: 'boern', antal: 2 },
+  { navn: 'Kortspil/brætspil', kat: 'Leg & hygge', hvem: 'boern', antal: 1 },
+  { navn: 'Kuffert med legesager', kat: 'Leg & hygge', hvem: ['p4'], antal: 1 },
+  { navn: 'Dyne', kat: 'Soveudstyr', hvem: 'boern', antal: 1 },
+  { navn: 'Svømmevest', kat: 'Leg & hygge', hvem: 'boern', saeson: ['sommer'], antal: 1 },
+  { navn: 'Badesko', kat: 'Leg & hygge', hvem: 'faelles', saeson: ['sommer'], antal: 4 },
+  { navn: 'Svømmebriller', kat: 'Leg & hygge', hvem: ['p2', 'p4'], saeson: ['sommer'], antal: 1 },
+  { navn: 'Pas', kat: 'Udlandet', hvem: 'alle', antal: 1 },
+  { navn: 'Smertestillende (voksen og barn)', kat: 'Apotek', hvem: 'faelles', antal: 1 },
+  { navn: 'Husk, loppefrøskaller', kat: 'Apotek', hvem: 'faelles', antal: 1 },
+  { navn: 'Vandflasker', kat: 'Spisetid & tur', hvem: 'faelles', antal: 1 },
+  { navn: 'Poser til vasketøj', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
+  { navn: 'Hagesmæk', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
+  { navn: 'Sutter', kat: 'Soveudstyr', hvem: ['p3'], antal: 3 },
+  { navn: 'Natbriller og ørepropper', kat: 'Soveudstyr', hvem: ['p2'], antal: 1 },
+  { navn: 'Karklude', kat: 'Sommerhus', hvem: 'faelles', prDag: 0.25, min: 3 },
+  { navn: 'Viskestykker', kat: 'Sommerhus', hvem: 'faelles', prDag: 0.25, min: 3 },
+  { navn: 'Sengetøj', kat: 'Sommerhus', hvem: 'faelles', min: 1 },
+  { navn: 'Babyalarmer', kat: 'Soveudstyr', hvem: ['p3'], antal: 1 },
+  { navn: 'Sommerhusnøglen', kat: 'Sommerhus', hvem: 'faelles', antal: 1 },
+  { navn: 'Pusletasken', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
+  { navn: 'Vådservietter', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
+  { navn: 'Bleer', kat: 'Spisetid & tur', hvem: ['p3'], prDag: 4, min: 5, max: 10 },
+];
+
+const BEFORE_LEAVING = [
+  { tekst: 'Tøm køleskabet' },
+  { tekst: 'Start opvaskemaskine' },
+  { tekst: 'Vand planterne' },
+  { tekst: 'Husk toilettasker fra badeværelset' },
+  { tekst: 'Tøm espressomaskine' },
+  { tekst: 'Tænd varmepumpe', kat: 'Sommerhus' },
+  { tekst: 'Ned med skraldet' },
+];
+
+/* ============================================================
+   HÅNDTEGNEDE ILLUSTRATIONER
+   ============================================================ */
+const SUITCASE = `<svg class="sketch" viewBox="0 0 170 150" aria-hidden="true" filter="url(#pencil)">
+  <path d="M40 22 C44 40 46 58 47 76"/>
+  <path d="M40 22 c-3 -3 -3 -8 0 -10 c3 2 3 7 0 10 M41 30 c-4 -2 -5 -7 -2 -9 M42 30 c4 -2 5 -7 2 -9 M43 40 c-4 -2 -5 -6 -2 -9 M44 40 c4 -2 5 -6 2 -9"/>
+  <path d="M58 36 C56 50 55 62 55 76"/>
+  <path d="M58 36 c-2 -4 -1 -8 2 -9 c2 3 1 7 -2 9 M57 45 c-4 -1 -6 -5 -4 -8 M58 45 c4 -1 6 -5 4 -8"/>
+  <path d="M30 60 C36 64 42 70 46 76 M70 58 C64 63 60 69 57 76"/>
+  <path d="M22 80 C21 75 25 72 31 72 L139 71 C146 71 149 75 149 81 L150 132 C150 139 146 141 139 141 L32 142 C25 142 22 139 22 133 Z"/>
+  <path d="M68 72 L68 61 C68 57 71 55 75 55 L96 55 C100 55 103 57 103 61 L103 71"/>
+  <path d="M52 73 L53 141 M118 72 L117 141"/>
+  <path d="M103 64 C112 66 119 72 123 82"/>
+  <path d="M121 81 L138 86 L134 104 L117 99 Z"/>
+  <circle cx="124" cy="87" r="1.8"/>
+  <path d="M34 142 c0 4 -2 5 -4 5 M138 142 c0 4 2 5 4 5"/>
+</svg>`;
+
+const HOUSE = `<svg class="sketch" viewBox="0 0 120 100" aria-hidden="true" filter="url(#pencil)">
+  <path d="M14 50 L58 16 L104 51"/>
+  <path d="M22 45 L23 92 L96 91 L95 45"/>
+  <path d="M82 34 L82 20 L91 20 L91 41"/>
+  <path d="M50 92 L50 66 C50 61 66 61 66 66 L66 91"/>
+  <circle cx="62" cy="79" r="1.4"/>
+  <path d="M31 58 L44 58 L44 70 L31 70 Z M37 58 L37 70"/>
+  <path d="M76 58 L88 58 L88 70 L76 70 Z M82 58 L82 70"/>
+  <path d="M6 92 C30 93 80 91 114 92"/>
+  <path d="M106 91 C105 82 108 76 112 72 M107 84 c-4 -3 -6 -6 -6 -10 M109 80 c4 -2 6 -5 6 -9"/>
+</svg>`;
+
+/* ============================================================
+   LISTE-GENERERING
+   ============================================================ */
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const personById = id => PEOPLE.find(p => p.id === id) || (id === SHARED.id ? SHARED : null);
+
+function targetsFor(item, selected) {
+  const h = item.hvem || 'alle';
+  if (h === 'faelles') return [SHARED.id];
+  if (h === 'alle') return selected.map(p => p.id);
+  if (h === 'voksne') return selected.filter(p => p.type === 'voksen').map(p => p.id);
+  if (h === 'boern') return selected.filter(p => p.type === 'barn').map(p => p.id);
+  if (Array.isArray(h)) return selected.filter(p => h.includes(p.id)).map(p => p.id);
+  return [];
+}
+function qtyFor(item, days) {
+  if (item.prDag) {
+    let n = Math.ceil(days * item.prDag);
+    if (item.min) n = Math.max(n, item.min);
+    if (item.max) n = Math.min(n, item.max);
+    return n;
+  }
+  return item.antal || null;
+}
+// ting i en tur-type-kategori (fx "Sommerhus") kommer kun med, når den type er valgt
+function tripTypeAllows(kat, trip) {
+  const type = TRIP_TYPES.find(t => t.kat === kat);
+  return !type || (trip.types || []).includes(type.id);
+}
+const leavingFor = trip => BEFORE_LEAVING.filter(t => tripTypeAllows(t.kat, trip));
+
+function buildGroups(trip) {
+  const selected = PEOPLE.filter(p => trip.people.includes(p.id));
+  const groups = new Map();
+  [...selected, SHARED].forEach(p => groups.set(p.id, []));
+  for (const item of ITEMS) {
+    if (item.saeson && !item.saeson.includes(trip.season)) continue;
+    if (!tripTypeAllows(item.kat, trip)) continue;
+    const q = qtyFor(item, trip.days);
+    const targets = targetsFor(item, selected);
+    if (!targets.length) continue;
+    // toiletsager, elektronik og papirer samles på fælles-listen med ét samlet antal
+    if (SHARED_CATS.includes(item.kat) && targets[0] !== SHARED.id) {
+      const total = (q || 1) * targets.length;
+      groups.get(SHARED.id).push({ id: slug(SHARED.id + '-' + item.navn), navn: item.navn, kat: item.kat, qty: total > 1 ? total : null, forWho: targets });
+      continue;
+    }
+    for (const pid of targets) {
+      groups.get(pid).push({ id: slug(pid + '-' + item.navn), navn: item.navn, kat: item.kat || 'Andet', qty: q && q > 1 ? q : null });
+    }
+  }
+  for (const list of groups.values()) list.sort((a, b) => catIdx(a.kat) - catIdx(b.kat));
+  return groups;
+}
+const catIdx = k => { const i = CAT_ORDER.indexOf(k); return i < 0 ? 99 : i; };
+
+/* ============================================================
+   LAGRING – gemmes i browseren på den enhed, man bruger
+   ============================================================ */
+const LS_KEY = 'pakkeliste-v1';
+let state = { trip: null, extras: {}, checked: {} };
+
+function deepMerge(target, patch) {
+  for (const [k, v] of Object.entries(patch)) {
+    if (v && typeof v === 'object' && !Array.isArray(v) && target[k] && typeof target[k] === 'object') deepMerge(target[k], v);
+    else target[k] = v;
+  }
+  return target;
+}
+function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+function loadLocal() { try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s) state = { trip: null, extras: {}, checked: {}, ...s }; } catch (e) {} }
+function persist(patch, full) {
+  if (full) state = JSON.parse(JSON.stringify(full)); else deepMerge(state, JSON.parse(JSON.stringify(patch)));
+  saveLocal();
+  render();
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const app = document.getElementById('app');
+let view = 'setup';
+let draft = { people: PEOPLE.map(p => p.id), season: currentSeason(), types: [], days: 5 };
+let hideDone = false, confirmReset = false;
+
+function currentSeason() { const m = new Date().getMonth(); return m < 2 || m === 11 ? 'vinter' : m < 5 ? 'foraar' : m < 8 ? 'sommer' : 'efteraar'; }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const seasonName = id => (SEASONS.find(s => s.id === id) || {}).navn || '';
+const pad = n => String(n).padStart(2, '0');
+
+function render() {
+  const active = document.activeElement && document.activeElement.id;
+  const draftText = (document.getElementById('extra-text') || {}).value || '';
+  const draftWho = (document.getElementById('extra-who') || {}).value;
+  app.innerHTML = view === 'list' && state.trip ? renderList() : renderSetup();
+  const t = document.getElementById('extra-text'); if (t) t.value = draftText;
+  const w = document.getElementById('extra-who'); if (w && draftWho) w.value = draftWho;
+  if (active) { const el = document.getElementById(active); if (el) el.focus(); }
+}
+
+function renderSetup() {
+  const ok = draft.people.length > 0 && draft.days >= 1;
+  return `
+  <header class="hero">
+    <div class="eyebrow">Familiens pakkeliste</div>
+    <h1>Vi skal ud<span class="indent">på <span class="brush">oplevelse</span></span></h1>
+    <div class="lede-row">
+      <p class="lede">Vælg hvem der skal med på turen, hvilken sæson det er, og hvor mange dage I er af sted.</p>
+      ${SUITCASE}
+    </div>
+  </header>
+
+  ${state.trip ? `<div class="banner"><span class="mono">I gang</span><p>${esc(seasonName(state.trip.season))}, <em>${state.trip.days} dage</em></p><button class="link" data-act="continue">Fortsæt pakningen →</button></div>` : ''}
+
+  <section class="row">
+    <div class="row-label"><span class="mono">01</span><span class="lbl" id="h-who">hvem</span></div>
+    <div class="people" role="group" aria-labelledby="h-who">
+      ${PEOPLE.map(p => { const on = draft.people.includes(p.id); return `<button id="pb-${p.id}" class="person-btn" data-act="person" data-id="${p.id}" aria-pressed="${on}"><span class="mark ${on ? 'on' : ''}"></span><span class="pname">${esc(p.navn)}</span><span class="mono">${p.type === 'barn' ? 'barn' : 'voksen'}</span></button>`; }).join('')}
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="row-label"><span class="mono">02</span><span class="lbl" id="h-season">sæson</span></div>
+    <div class="seasons" role="group" aria-labelledby="h-season">
+      ${SEASONS.map(s => `<button id="sb-${s.id}" class="season-btn" data-act="season" data-id="${s.id}" aria-pressed="${draft.season === s.id}"><span>${s.navn}</span></button>`).join('')}
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="row-label"><span class="mono">03</span><span class="lbl" id="h-type">type</span></div>
+    <div class="people" role="group" aria-labelledby="h-type">
+      ${TRIP_TYPES.map(t => { const on = draft.types.includes(t.id); return `<button id="tb-${t.id}" class="person-btn" data-act="type" data-id="${t.id}" aria-pressed="${on}"><span class="mark ${on ? 'on' : ''}"></span><span class="pname">${esc(t.navn)}</span></button>`; }).join('')}
+      <span class="mono type-hint">vælg én, eller ingen</span>
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="row-label"><span class="mono">04</span><label class="lbl" for="days">dage</label></div>
+    <div class="stepper">
+      <button id="days-minus" data-act="days" data-d="-1" aria-label="Færre dage">−</button>
+      <input id="days" type="number" inputmode="numeric" min="1" max="60" value="${draft.days}">
+      <button id="days-plus" data-act="days" data-d="1" aria-label="Flere dage">+</button>
+    </div>
+  </section>
+
+  <div class="cta">
+    <button id="generate" class="primary" data-act="generate" ${ok ? '' : 'disabled'}><span>Lav pakkeliste</span><span aria-hidden="true">→</span></button>
+    ${state.trip ? `<p class="note">En ny liste erstatter den, der er i gang, også ekstra ting og flueben.</p>` : ''}
+  </div>`;
+}
+
+function itemRow(id, name, qty, extraHtml = '', delId = '') {
+  const done = !!state.checked[id];
+  if (hideDone && done) return '';
+  return `<li><label class="item ${done ? 'done' : ''}"><input class="mark" type="checkbox" id="c-${id}" data-check="${id}" ${done ? 'checked' : ''}><span class="name">${esc(name)}</span>${extraHtml}${qty ? `<span class="qty">× ${qty}</span>` : ''}${delId ? `<button class="del" data-act="del-extra" data-id="${delId}" aria-label="Fjern ${esc(name)}">×</button>` : ''}</label></li>`;
+}
+
+const sheetRow = (label, content) => `<div class="sheet-row"><div class="cat">${esc(label)}</div><div class="sheet-body">${content}</div></div>`;
+
+function renderList() {
+  const trip = state.trip;
+  const groups = buildGroups(trip);
+  const extras = Object.entries(state.extras).filter(([, v]) => v && v.text).sort((a, b) => (a[1].t || 0) - (b[1].t || 0));
+  let total = 0, done = 0;
+  for (const list of groups.values()) for (const it of list) { total++; if (state.checked[it.id]) done++; }
+  for (const [id] of extras) { total++; if (state.checked['x-' + id]) done++; }
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const selected = PEOPLE.filter(p => trip.people.includes(p.id));
+
+  const groupHtml = [...groups.entries()].filter(([, l]) => l.length).map(([pid, list]) => {
+    const p = personById(pid);
+    const d = list.filter(i => state.checked[i.id]).length;
+    // én række pr. kategori: kursiv etiket i venstre spalte, tingene i højre (som en etiket)
+    const cats = new Map();
+    for (const it of list) {
+      const whoHtml = it.forWho && selected.length > 1
+        ? `<span class="who" title="${esc(it.forWho.map(id => personById(id).navn).join(', '))}">${it.forWho.map(id => `<span class="blob" style="--pc:${personById(id).color}"></span>`).join('')}</span>`
+        : '';
+      const r = itemRow(it.id, it.navn, it.qty, whoHtml);
+      if (r) cats.set(it.kat, (cats.get(it.kat) || '') + r);
+    }
+    const body = [...cats.entries()].map(([kat, rows]) => sheetRow(kat.toLowerCase(), `<ul class="items">${rows}</ul>`)).join('');
+    return `<section class="group" style="--pc:${p.color}">
+      <div class="group-head"><h2><span class="blob"></span>${esc(p.navn)}</h2><span class="mono ${d === list.length ? 'all-done' : ''}">${pad(d)} / ${pad(list.length)}</span></div>
+      ${body || sheetRow('', `<p class="empty-note">Alt er pakket.</p>`)}
+    </section>`;
+  }).join('');
+
+  const extraRows = extras.map(([id, x]) => {
+    const p = personById(x.who) || SHARED;
+    return itemRow('x-' + id, x.text, null, `<span class="who"><span class="blob" style="--pc:${p.color}"></span>${esc(p.navn)}</span>`, id);
+  }).join('');
+  const xd = extras.filter(([id]) => state.checked['x-' + id]).length;
+
+  const leaving = leavingFor(trip);
+  const leaveDone = leaving.filter(t => state.checked['go-' + slug(t.tekst)]).length;
+  const leaveRows = leaving.map(t => itemRow('go-' + slug(t.tekst), t.tekst, null)).join('');
+
+  return `
+  <header class="hero">
+    <div class="eyebrow">${esc(seasonName(trip.season))} · ${trip.days} ${trip.days === 1 ? 'dag' : 'dage'}</div>
+    ${SUITCASE}
+    <h1>Det skal vi<span class="indent"><span class="brush">pakke</span></span></h1>
+    <dl class="spec">
+      <div><dt>hvem</dt><dd class="spec-people">${selected.map(p => `<span><span class="blob" style="--pc:${p.color}"></span>${esc(p.navn)}</span>`).join('')}</dd></div>
+      <div><dt>sæson</dt><dd>${esc(seasonName(trip.season))}</dd></div>
+      ${(trip.types || []).length ? `<div><dt>type</dt><dd>${TRIP_TYPES.filter(t => trip.types.includes(t.id)).map(t => esc(t.navn)).join(' · ')}</dd></div>` : ''}
+      <div><dt>dage</dt><dd>${pad(trip.days)}</dd></div>
+      <div><dt>pakket</dt><dd>${pad(done)} / ${pad(total)}</dd></div>
+    </dl>
+    <div class="progress-wrap">
+      <div class="progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Pakket"><div style="width:${pct}%"></div></div>
+      <div class="actions">
+        <button id="hide-done" class="link" data-act="hide" aria-pressed="${hideDone}">${hideDone ? 'Vis pakkede' : 'Skjul pakkede'}</button>
+        <button class="link" data-act="back">Skift valg</button>
+      </div>
+    </div>
+  </header>
+
+  ${groupHtml}
+
+  <section class="group">
+    <div class="group-head"><h2>Ekstra</h2><span class="mono">${pad(xd)} / ${pad(extras.length)}</span></div>
+    ${sheetRow('denne tur', `
+      ${extraRows ? `<ul class="items">${extraRows}</ul>` : `<p class="empty-note">${extras.length ? 'Alt er pakket.' : 'Ting, der kun skal med på netop denne tur.'}</p>`}
+      <form class="add-form" id="add-form" autocomplete="off">
+        <input id="extra-text" placeholder="Fx svømmebriller" aria-label="Ny ting" maxlength="80">
+        <select id="extra-who" aria-label="Til hvem">
+          ${[...selected, SHARED].map(p => `<option value="${p.id}">${esc(p.navn)}</option>`).join('')}
+        </select>
+        <button type="submit" class="primary">Tilføj</button>
+      </form>`)}
+  </section>
+
+  <section class="leaving">
+    ${HOUSE}
+    <div class="group-head">
+      <h2>Inden vi går</h2>
+      <span class="mono">${pad(leaveDone)} / ${pad(leaving.length)}</span>
+    </div>
+    ${sheetRow('lejligheden', leaveRows ? `<ul class="items">${leaveRows}</ul>` : `<p class="empty-note">Lejligheden er klar. God tur!</p>`)}
+  </section>
+
+  <div class="reset-row">
+    ${confirmReset
+      ? `<span>Slet den nuværende pakkeliste?</span><button class="link" data-act="reset-yes">Ja, slet den</button><button class="link" data-act="reset-no">Fortryd</button>`
+      : `<button class="link" data-act="reset">Afslut og start forfra</button>`}
+  </div>`;
+}
+
+/* ============================================================
+   HÆNDELSER
+   ============================================================ */
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'person') {
+    const id = b.dataset.id;
+    draft.people = draft.people.includes(id) ? draft.people.filter(x => x !== id) : [...draft.people, id];
+    render();
+  } else if (act === 'season') { draft.season = b.dataset.id; render(); }
+  else if (act === 'type') {
+    const id = b.dataset.id;
+    // højst én type ad gangen: klik på den valgte fravælger den, klik på den anden skifter
+    draft.types = draft.types.includes(id) ? [] : [id];
+    render();
+  }
+  else if (act === 'days') { draft.days = Math.min(60, Math.max(1, draft.days + Number(b.dataset.d))); render(); }
+  else if (act === 'generate') {
+    if (!draft.people.length) return;
+    const trip = { people: PEOPLE.map(p => p.id).filter(id => draft.people.includes(id)), season: draft.season, types: TRIP_TYPES.map(t => t.id).filter(id => draft.types.includes(id)), days: draft.days, created: Date.now() };
+    view = 'list'; hideDone = false; confirmReset = false;
+    persist(null, { trip, extras: {}, checked: {} });
+    window.scrollTo(0, 0);
+  }
+  else if (act === 'continue') { view = 'list'; render(); window.scrollTo(0, 0); }
+  else if (act === 'back') {
+    draft = { people: [...state.trip.people], season: state.trip.season, types: [...(state.trip.types || [])], days: state.trip.days };
+    view = 'setup'; render(); window.scrollTo(0, 0);
+  }
+  else if (act === 'hide') { hideDone = !hideDone; render(); }
+  else if (act === 'del-extra') {
+    e.preventDefault();
+    const id = b.dataset.id;
+    persist({ extras: { [id]: null }, checked: { ['x-' + id]: false } });
+  }
+  else if (act === 'reset') { confirmReset = true; render(); }
+  else if (act === 'reset-no') { confirmReset = false; render(); }
+  else if (act === 'reset-yes') {
+    confirmReset = false; view = 'setup';
+    persist(null, { trip: null, extras: {}, checked: {} });
+    window.scrollTo(0, 0);
+  }
+});
+
+app.addEventListener('change', e => {
+  const id = e.target.dataset && e.target.dataset.check;
+  if (id) { persist({ checked: { [id]: e.target.checked } }); return; }
+  if (e.target.id === 'days') {
+    const n = parseInt(e.target.value, 10);
+    draft.days = Number.isFinite(n) ? Math.min(60, Math.max(1, n)) : 1;
+    render();
+  }
+});
+
+app.addEventListener('submit', e => {
+  if (e.target.id !== 'add-form') return;
+  e.preventDefault();
+  const input = document.getElementById('extra-text');
+  const text = input.value.trim();
+  if (!text) return;
+  const who = document.getElementById('extra-who').value;
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  input.value = '';
+  persist({ extras: { [id]: { text, who, t: Date.now() } } });
+  document.getElementById('extra-text').focus();
+});
+
+loadLocal();
+if (state.trip) view = 'list';
+render();
+</script>
+</body>
+</html>
