@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Familiens Pakkeliste</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Pakkeliste">
+<meta name="theme-color" content="#f4f0e7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400&family=Work+Sans:wght@500&family=Courier+Prime&display=swap">
@@ -247,46 +253,49 @@ const TRIP_TYPES = [
   { id: 'sommerhus', navn: 'Sommerhus', kat: 'Sommerhus' },
 ];
 // kategorier der altid pakkes samlet på fælles-listen, også når de gælder hver person
-const SHARED_CATS = ['Toiletsager', 'Elektronik', 'Udlandet'];
-const CAT_ORDER = ['Tøj', 'Overtøj & sko', 'Toiletsager', 'Elektronik', 'Soveudstyr', 'Leg & hygge', 'Udlandet', 'Apotek', 'Spisetid & tur', 'Sommerhus'];
+const SHARED_CATS = ['Overtøj & sko', 'Toiletsager', 'Elektronik', 'Spisetid & tur', 'Udlandet'];
+const CAT_ORDER = ['Tøj', 'Overtøj & sko', 'Svømmeudstyr', 'Toiletsager', 'Elektronik', 'Soveudstyr', 'Leg & hygge', 'Udlandet', 'Apotek', 'Spisetid & tur', 'Sommerhus'];
 
 const ITEMS = [
   { navn: 'Underbukser', kat: 'Tøj', hvem: 'alle', prDag: 1, min: 2, max: 10 },
   { navn: 'Undertrøjer', kat: 'Tøj', hvem: 'boern', prDag: 1, min: 2, max: 10 },
   { navn: 'Strømper', kat: 'Tøj', hvem: 'alle', prDag: 1, min: 2, max: 10 },
+  { navn: 'Strømpebukser', kat: 'Tøj', hvem: ['p4', 'p1'], prDag: 0.25, min: 1, max: 5 },
   { navn: 'T-shirts', kat: 'Tøj', hvem: 'alle', saeson: ['foraar', 'sommer', 'efteraar'], prDag: 0.8, min: 2, max: 10 },
   { navn: 'Shorts', kat: 'Tøj', hvem: 'alle', saeson: ['sommer'], prDag: 0.4, min: 1, max: 6 },
   { navn: 'Lange bukser', kat: 'Tøj', hvem: 'alle', prDag: 0.3, min: 1, max: 3 },
   { navn: 'Langærmet bluse', kat: 'Tøj', hvem: 'alle', saeson: ['foraar', 'efteraar', 'vinter'], prDag: 0.4, min: 1, max: 10 },
   { navn: 'Nederdel', kat: 'Tøj', hvem: ['p4', 'p1'], max: 3 },
-  { navn: 'Kjole', kat: 'Tøj', hvem: ['p4', 'p1'], max: 2 },
-  { navn: 'Varm trøje', kat: 'Tøj', hvem: 'alle', min: 1, antal: 1 },
+  { navn: 'Kjoler', kat: 'Tøj', hvem: ['p4', 'p1'], prDag: 0.25, max: 2 },
+  { navn: 'Varm trøje', kat: 'Overtøj & sko', hvem: 'alle', min: 1, antal: 1 },
   { navn: 'Nattøj', kat: 'Tøj', hvem: 'alle', prDag: 0.15, min: 1, max: 6 },
   { navn: 'Sovestrømper', kat: 'Tøj', hvem: ['p1'], saeson: ['efteraar', 'vinter'], antal: 1 },
-  { navn: 'Badetøj', kat: 'Tøj', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Badetøj', kat: 'Svømmeudstyr', hvem: 'alle', saeson: ['sommer'], prDag: 0.25, antal: 1 },
   { navn: 'Løbetøj og løbesko', kat: 'Tøj', hvem: 'voksne', antal: 1 },
   { navn: 'Sneakers', kat: 'Overtøj & sko', hvem: 'alle', antal: 1 },
   { navn: 'Sandaler', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['sommer'], antal: 1 },
   { navn: 'Crocs', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'sommer', 'efteraar'], antal: 1 },
-  { navn: 'Solhat / kasket', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Solhat', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'sommer'], antal: 1 },
+  { navn: 'Kasket', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['sommer'] },
   { navn: 'Solbriller', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['foraar', 'sommer'], antal: 1 },
   { navn: 'Regnjakke', kat: 'Overtøj & sko', hvem: 'alle', antal: 1 },
   { navn: 'Regnbukser', kat: 'Overtøj & sko', hvem: 'boern', antal: 1 },
-  { navn: 'Gummistøvler', kat: 'Overtøj & sko', hvem: 'faelles', antal: 4 },
-  { navn: 'Termotøj', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'efteraar'], antal: 1 },
+  { navn: 'Gummistøvler', kat: 'Overtøj & sko', hvem: 'alle', antal: 1 },
+  { navn: 'Termotøj/overtræksbukser', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'efteraar'], antal: 1 },
   { navn: 'Vinterjakke', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['vinter'], antal: 1 },
   { navn: 'Varm jakke', kat: 'Overtøj & sko', hvem: 'voksne', saeson: ['efteraar'], antal: 1 },
+  { navn: 'Jakke', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['foraar', 'vinter', 'efteraar'] },
   { navn: 'Flyverdragt', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['vinter'], antal: 1 },
   { navn: 'Hue, halstørklæde og vanter', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['efteraar', 'vinter'], antal: 1 },
   { navn: 'Vinterstøvler', kat: 'Overtøj & sko', hvem: 'alle', saeson: ['vinter'], antal: 1 },
-  { navn: 'Hjemmesko (børn)', kat: 'Overtøj & sko', hvem: 'boern', saeson: ['foraar', 'vinter', 'efteraar'], antal: 1 },
+  { navn: 'Hjemmesko', kat: 'Overtøj & sko', hvem: ['p3', 'p4', 'p1'], saeson: ['foraar', 'vinter', 'efteraar'], antal: 1 },
   { navn: 'Tandbørste', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
   { navn: 'Hårbørste', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
   { navn: 'Elastikker og hårspænder', kat: 'Toiletsager', hvem: ['p4', 'p1'], antal: 3 },
   { navn: 'Make-up: masccara mm.', kat: 'Toiletsager', hvem: ['p1'], antal: 1 },
   { navn: 'Negleklipper (voksen og barn)', kat: 'Toiletsager', hvem: 'faelles', antal: 2 },
   { navn: 'Håndklæde', kat: 'Toiletsager', hvem: 'alle', antal: 1 },
-  { navn: 'Strandhåndklæde', kat: 'Toiletsager', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Strandhåndklæde', kat: 'Svømmeudstyr', hvem: 'alle', saeson: ['sommer'], antal: 1 },
   { navn: 'Tandpasta', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
   { navn: 'Shampoo og sæbe', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
   { navn: 'Deodorant', kat: 'Toiletsager', hvem: 'voksne', antal: 1 },
@@ -310,13 +319,13 @@ const ITEMS = [
   { navn: 'Kortspil/brætspil', kat: 'Leg & hygge', hvem: 'boern', antal: 1 },
   { navn: 'Kuffert med legesager', kat: 'Leg & hygge', hvem: ['p4'], antal: 1 },
   { navn: 'Dyne', kat: 'Soveudstyr', hvem: 'boern', antal: 1 },
-  { navn: 'Svømmevest', kat: 'Leg & hygge', hvem: 'boern', saeson: ['sommer'], antal: 1 },
-  { navn: 'Badesko', kat: 'Leg & hygge', hvem: 'faelles', saeson: ['sommer'], antal: 4 },
-  { navn: 'Svømmebriller', kat: 'Leg & hygge', hvem: ['p2', 'p4'], saeson: ['sommer'], antal: 1 },
+  { navn: 'Svømmevest', kat: 'Svømmeudstyr', hvem: 'boern', saeson: ['sommer'], antal: 1 },
+  { navn: 'Badesko', kat: 'Svømmeudstyr', hvem: 'alle', saeson: ['sommer'], antal: 1 },
+  { navn: 'Svømmebriller', kat: 'Svømmeudstyr', hvem: ['p2', 'p4'], saeson: ['sommer'], antal: 1 },
   { navn: 'Pas', kat: 'Udlandet', hvem: 'alle', antal: 1 },
   { navn: 'Smertestillende (voksen og barn)', kat: 'Apotek', hvem: 'faelles', antal: 1 },
-  { navn: 'Husk, loppefrøskaller', kat: 'Apotek', hvem: 'faelles', antal: 1 },
-  { navn: 'Vandflasker', kat: 'Spisetid & tur', hvem: 'faelles', antal: 1 },
+  { navn: 'Husk, loppefrøskaller', kat: 'Apotek', hvem: ['p1'], antal: 1 },
+  { navn: 'Vandflasker', kat: 'Spisetid & tur', hvem: 'alle', antal: 1 },
   { navn: 'Poser til vasketøj', kat: 'Toiletsager', hvem: 'faelles', antal: 1 },
   { navn: 'Hagesmæk', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
   { navn: 'Sutter', kat: 'Soveudstyr', hvem: ['p3'], antal: 3 },
@@ -329,6 +338,7 @@ const ITEMS = [
   { navn: 'Pusletasken', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
   { navn: 'Vådservietter', kat: 'Spisetid & tur', hvem: ['p3'], antal: 1 },
   { navn: 'Bleer', kat: 'Spisetid & tur', hvem: ['p3'], prDag: 4, min: 5, max: 10 },
+  { navn: 'Stofbleer', kat: 'Spisetid & tur', hvem: ['p3'], prDag: 1, min: 2, max: 10 },
 ];
 
 const BEFORE_LEAVING = [
